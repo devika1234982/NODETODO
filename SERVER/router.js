@@ -1,44 +1,64 @@
 const fs = require("fs");
 const path = require("path");
-const { getTodos, addTodo, deleteTodo } = require("./controllers");
+const { getTodo, addTodo, deleteTodo, updateTodo } = require("./controllers");
+
+
+function render(res, filename, contentType) {
+    const filePath = path.join(__dirname, "../public", filename);
+
+    fs.readFile(filePath, (err, data) => {
+        if (err) {
+            res.writeHead(404);
+            return res.end("File Not Found");
+        }
+
+        res.writeHead(200, { "Content-Type": contentType });
+        res.end(data);
+    });
+}
 
 module.exports = (req, res) => {
+    const { method, url } = req;
 
-    if (req.method === "GET" && req.url === "/") {
-        fs.readFile(path.join(__dirname, "../public/index.html"), "utf8", (err, data) => {
-            res.end(data);
-        });
+    
+    if (method === "GET" && url === "/") {
+        return render(res, "index.html", "text/html");
     }
 
-    else if (req.url === "/todo.css") {
-        fs.readFile(path.join(__dirname, "../public/todo.css"), (err, data) => {
-            res.writeHead(200, { "Content-Type": "text/css" });
-            res.end(data);
-        });
+    
+    if (url === "/todo.css") {
+        return render(res, "todo.css", "text/css");
     }
 
-    else if (req.url === "/script.js") {
-        fs.readFile(path.join(__dirname, "../public/script.js"), (err, data) => {
-            res.writeHead(200, { "Content-Type": "application/javascript" });
-            res.end(data);
-        });
+    
+    if (url === "/script.js") {
+        return render(res, "script.js", "text/javascript");
     }
 
-    else if (req.method === "GET" && req.url === "/api/todos") {
-        getTodos(req, res);
+    
+    if (method === "GET" && url === "/api/todos") {
+        return getTodo(req, res);
     }
 
-    else if (req.method === "POST" && req.url === "/api/todos") {
-        addTodo(req, res);
+   
+    if (method === "POST" && url === "/api/todos") {
+        return addTodo(req, res);
     }
 
-    else if (req.method === "DELETE" && req.url.startsWith("/api/todos/")) {
-        const id = req.url.split("/")[3];
-        deleteTodo(req, res, id);
+   
+    if (method === "DELETE" && url.startsWith("/api/todos/")) {
+        const id = url.split("/")[3];
+        return deleteTodo(req, res, id);
     }
 
-    else {
-        res.writeHead(404);
-        res.end("404 Not Found");
+  
+    if (method === "PATCH" && url.startsWith("/api/todos/")) {
+        const id = url.split("/")[3];
+        return updateTodo(req, res, id);
     }
+
+   
+    res.writeHead(404);
+    res.end("404 Not Found");
 };
+
